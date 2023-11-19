@@ -7,7 +7,9 @@ import threading
 
 from rclpy.node import Node
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Header
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseWithCovariance, TwistWithCovariance
 
 
 class DriverNode(Node):
@@ -19,6 +21,7 @@ class DriverNode(Node):
             'wheel_distance').get_parameter_value().double_value
 
         self.publisher = self.create_publisher(String, 'topic', 10)
+        self.odom_publisher = self.create_publisher(Odometry, 'odom', 10)
         timer_period = 0.5
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.loop_run = True
@@ -52,7 +55,8 @@ class DriverNode(Node):
             try:
                 out = json.loads(t)
                 self.__update_odom(out['ENCODER_L'], out['ENCODER_R'])
-                print(self.pos_curr)
+                self.__pub_odom()
+                print(self.spd_curr)
 
             except:
                 pass
@@ -79,6 +83,15 @@ class DriverNode(Node):
         self.spd_curr = delta_pos / dt
         self.last_updated = time.time()
 
+    def __pub_odom(self):
+        msg = Odometry()
+        msg.header = Header()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = 'odom'
+        msg.child_frame_id = 'base_footprint'
+
+        self.odom_publisher.publish(msg)
+
     def timer_callback(self):
         msg = String()
         self.publisher.publish(msg)
@@ -99,3 +112,109 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
+
+'''
+header:
+  stamp:
+    sec: 654
+    nanosec: 558000000
+  frame_id: odom
+child_frame_id: base_footprint
+pose:
+  pose:
+    position:
+      x: 0.3897116777864488
+      y: 0.5775735445599315
+      z: 0.008716583015249066
+    orientation:
+      x: -4.157664625347287e-05
+      y: 0.000773888536448999
+      z: 0.06622875892363787
+      w: 0.9978041645830861
+  covariance:
+  - 1.0e-05
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0e-05
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1000000000000.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1000000000000.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1000000000000.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.001
+twist:
+  twist:
+    linear:
+      x: 6.712135301955686e-05
+      y: 5.240447274364051e-06
+      z: 0.0
+    angular:
+      x: 0.0
+      y: 0.0
+      z: -0.0002637948243706981
+  covariance:
+  - 1.0e-05
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1.0e-05
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1000000000000.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1000000000000.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 1000000000000.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.001
+---
+'''
